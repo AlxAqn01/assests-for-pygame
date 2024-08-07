@@ -8,6 +8,7 @@ import itertools
 import cv2 as cv
 import numpy as np
 import mediapipe as mp
+from picamera2 import Picamera2
 
 from model import KeyPointClassifier
 
@@ -34,18 +35,18 @@ class GestureRecognition:
             keypoint_classifier_labels = csv.reader(f)
             self.keypoint_classifier_labels = [row[0] for row in keypoint_classifier_labels]
 
-    def detect_gesture(self):
-        # Camera preparation
-        cap = cv.VideoCapture(0)
-        cap.set(cv.CAP_PROP_FRAME_WIDTH, 600)
-        cap.set(cv.CAP_PROP_FRAME_HEIGHT, 480)
+        # Initialize Picamera2
+        self.picam2 = Picamera2()
+        camera_config = self.picam2.create_preview_configuration(main={"format": "XRGB8888", "size": (600, 480)})
+        self.picam2.configure(camera_config)
+        self.picam2.start()
 
+    def detect_gesture(self):
         detected_gesture = "None"
         
         while True:
-            ret, image = cap.read()
-            if not ret:
-                break
+            frame = self.picam2.capture_array()
+            image = frame[:, :, :3]  # Remove alpha channel
             image = cv.flip(image, 1)  # Mirror display
             debug_image = copy.deepcopy(image)
 
@@ -78,7 +79,7 @@ class GestureRecognition:
                                 self.gesture_start_time = time.time()
                             elif (time.time() - self.gesture_start_time) >= self.detection_duration:
                                 self.current_gesture = detected_gesture
-                                cap.release()
+                                self.picam2.stop()
                                 cv.destroyAllWindows()
                                 return self.current_gesture
                         else:
@@ -96,13 +97,13 @@ class GestureRecognition:
                 self.gesture_start_time = None
 
             # Display the camera feed
-            # cv.putText(debug_image, f'Gesture: {self.current_gesture}', (10, 30), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv.LINE_AA)
+            cv.putText(debug_image, f'Gesture: {self.current_gesture}', (10, 30), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv.LINE_AA)
             cv.imshow('Hand Gesture Recognition', debug_image)
 
             if cv.waitKey(1) & 0xFF == ord('q'):
                 break
 
-        cap.release()
+        self.picam2.stop()
         cv.destroyAllWindows()
         return self.current_gesture
 
