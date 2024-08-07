@@ -81,6 +81,7 @@ class GestureRecognition:
                                 self.current_gesture = detected_gesture
                                 self.picam2.stop()
                                 cv.destroyAllWindows()
+                                self.reset_camera()
                                 return self.current_gesture
                         else:
                             self.gesture_start_time = time.time()
@@ -105,6 +106,7 @@ class GestureRecognition:
 
         self.picam2.stop()
         cv.destroyAllWindows()
+        self.reset_camera()
         return self.current_gesture
 
     def calc_bounding_rect(self, image, landmarks):
@@ -166,3 +168,7 @@ class GestureRecognition:
     def draw_bounding_rect(self, image, brect):
         cv.rectangle(image, (brect[0], brect[1]), (brect[2], brect[3]), (255, 255, 255), 2)
         return image
+
+    def reset_camera(self):
+        self.picam2.stop()
+        self.picam2.start()
