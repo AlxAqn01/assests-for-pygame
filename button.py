@@ -22,15 +22,16 @@ class Button():
             self.mouse_released = True
 
         # Check mouseover and clicked conditions
-        if self.mouse_released and self.rect.collidepoint(pos):
+        if self.rect.collidepoint(pos):
             if not self.enlarged:
                 self.enlarge()
-            if pygame.mouse.get_pressed()[0] == 1 and not self.clicked:
+            if pygame.mouse.get_pressed()[0] == 1 and not self.clicked and self.mouse_released:
                 self.clicked = True
-                action = True
-                click_sfx.play()
+                self.mouse_released = False
             elif pygame.mouse.get_pressed()[0] == 0 and self.clicked:
                 self.clicked = False
+                action = True
+                click_sfx.play()
         else:
             if self.enlarged:
                 self.shrink()
